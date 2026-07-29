@@ -282,23 +282,24 @@ public enum PluginPayload {
     }
 
     /// Files to add, with the names they take inside the archive.
-    public struct Pack: Codable, Sendable {
-        public struct Input: Codable, Sendable {
-            public var source: String
-            public var pathInArchive: String
-            public init(source: String, pathInArchive: String) {
-                self.source = source
-                self.pathInArchive = pathInArchive
-            }
+    /// One file being added, with the name it takes inside the archive.
+    public struct PackInput: Codable, Sendable {
+        public var source: String
+        public var pathInArchive: String
+        public init(source: String, pathInArchive: String) {
+            self.source = source
+            self.pathInArchive = pathInArchive
         }
+    }
 
+    public struct Pack: Codable, Sendable {
         public var archive: String
-        public var files: [Input]
+        public var files: [PackInput]
         public var savePaths: Bool
         public var compressionLevel: Int?
 
         public init(
-            archive: String, files: [Input], savePaths: Bool = true,
+            archive: String, files: [PackInput], savePaths: Bool = true,
             compressionLevel: Int? = nil
         ) {
             self.archive = archive
