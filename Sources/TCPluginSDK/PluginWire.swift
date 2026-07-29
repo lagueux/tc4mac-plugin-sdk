@@ -336,26 +336,27 @@ public enum PluginPayload {
 
     /// Rendered content: `kind` names the case, and exactly one payload
     /// field carries it.
+    /// One labelled row of a properties view.
+    public struct ViewProperty: Codable, Sendable {
+        public var group: String?
+        public var name: String
+        public var value: String
+        public init(group: String? = nil, name: String, value: String) {
+            self.group = group
+            self.name = name
+            self.value = value
+        }
+    }
+
     public struct ViewContent: Codable, Sendable {
         public var kind: String  // text | html | image | pdf | properties
         public var text: String?
         public var data: Data?
-        public var properties: [Property]?
-
-        public struct Property: Codable, Sendable {
-            public var group: String?
-            public var name: String
-            public var value: String
-            public init(group: String? = nil, name: String, value: String) {
-                self.group = group
-                self.name = name
-                self.value = value
-            }
-        }
+        public var properties: [ViewProperty]?
 
         public init(
             kind: String, text: String? = nil, data: Data? = nil,
-            properties: [Property]? = nil
+            properties: [ViewProperty]? = nil
         ) {
             self.kind = kind
             self.text = text
