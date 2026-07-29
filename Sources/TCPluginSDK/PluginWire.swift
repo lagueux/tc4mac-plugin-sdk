@@ -105,6 +105,12 @@ public enum PluginWire {
         public static let archiveEntries = "archive.entries"
         public static let archiveExtract = "archive.extract"
         public static let archivePack = "archive.pack"
+        // Viewer plugin
+        public static let viewerPriority = "viewer.priority"
+        public static let viewerRender = "viewer.render"
+        // Content plugin
+        public static let contentFields = "content.fields"
+        public static let contentValue = "content.value"
     }
 
     /// The plugin's answer to `hello`.
@@ -306,6 +312,82 @@ public enum PluginPayload {
             self.files = files
             self.savePaths = savePaths
             self.compressionLevel = compressionLevel
+        }
+    }
+
+    /// A file offered to a viewer plugin, with the first bytes so it can
+    /// sniff a header without opening anything.
+    public struct ViewFile: Codable, Sendable {
+        public var path: String
+        public var prefix: Data
+        public var options: Int
+
+        public init(path: String, prefix: Data, options: Int = 0) {
+            self.path = path
+            self.prefix = prefix
+            self.options = options
+        }
+    }
+
+    public struct ViewPriority: Codable, Sendable {
+        public var priority: Int
+        public init(priority: Int) { self.priority = priority }
+    }
+
+    /// Rendered content: `kind` names the case, and exactly one payload
+    /// field carries it.
+    public struct ViewContent: Codable, Sendable {
+        public var kind: String  // text | html | image | pdf | properties
+        public var text: String?
+        public var data: Data?
+        public var properties: [Property]?
+
+        public struct Property: Codable, Sendable {
+            public var group: String?
+            public var name: String
+            public var value: String
+            public init(group: String? = nil, name: String, value: String) {
+                self.group = group
+                self.name = name
+                self.value = value
+            }
+        }
+
+        public init(
+            kind: String, text: String? = nil, data: Data? = nil,
+            properties: [Property]? = nil
+        ) {
+            self.kind = kind
+            self.text = text
+            self.data = data
+            self.properties = properties
+        }
+    }
+
+    /// One field a content plugin offers.
+    public struct Field: Codable, Sendable {
+        public var id: String
+        public var displayName: String
+        public var kind: String
+        public init(id: String, displayName: String, kind: String) {
+            self.id = id
+            self.displayName = displayName
+            self.kind = kind
+        }
+    }
+
+    public struct Fields: Codable, Sendable {
+        public var fields: [Field]
+        public init(fields: [Field]) { self.fields = fields }
+    }
+
+    /// Which field, for which file.
+    public struct FieldRequest: Codable, Sendable {
+        public var field: String
+        public var path: String
+        public init(field: String, path: String) {
+            self.field = field
+            self.path = path
         }
     }
 
