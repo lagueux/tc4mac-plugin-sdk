@@ -101,6 +101,10 @@ public enum PluginWire {
         public static let rename = "fs.rename"
         public static let probe = "fs.probe"
         public static let execute = "fs.execute"
+        // Packer plugin
+        public static let archiveEntries = "archive.entries"
+        public static let archiveExtract = "archive.extract"
+        public static let archivePack = "archive.pack"
     }
 
     /// The plugin's answer to `hello`.
@@ -111,15 +115,22 @@ public enum PluginWire {
         /// Raw value of `FileSystemPluginCapabilities`, when it serves a
         /// file system.
         public var fileSystemCapabilities: Int?
+        /// Raw value of `PackerCapabilities`, when it serves an archive
+        /// format, with the extensions it claims.
+        public var packerCapabilities: Int?
+        public var packerExtensions: [String]?
 
         public init(
             id: String, displayName: String, sdkVersion: Int = PluginWire.sdkVersion,
-            fileSystemCapabilities: Int? = nil
+            fileSystemCapabilities: Int? = nil,
+            packerCapabilities: Int? = nil, packerExtensions: [String]? = nil
         ) {
             self.id = id
             self.displayName = displayName
             self.sdkVersion = sdkVersion
             self.fileSystemCapabilities = fileSystemCapabilities
+            self.packerCapabilities = packerCapabilities
+            self.packerExtensions = packerExtensions
         }
     }
 
@@ -223,6 +234,77 @@ public enum PluginPayload {
             self.path = path
             self.newPath = newPath
             self.copy = copy
+        }
+    }
+
+    /// One archive entry on the wire — `ArchiveEntryHeader` without the
+    /// types JSON cannot carry directly.
+    public struct ArchiveEntry: Codable, Sendable, Equatable {
+        public var path: String
+        public var isDirectory: Bool
+        public var size: Int64?
+        public var packedSize: Int64?
+        public var modified: Date?
+        public var isEncrypted: Bool
+        public var method: String?
+
+        public init(
+            path: String, isDirectory: Bool = false, size: Int64? = nil,
+            packedSize: Int64? = nil, modified: Date? = nil,
+            isEncrypted: Bool = false, method: String? = nil
+        ) {
+            self.path = path
+            self.isDirectory = isDirectory
+            self.size = size
+            self.packedSize = packedSize
+            self.modified = modified
+            self.isEncrypted = isEncrypted
+            self.method = method
+        }
+    }
+
+    public struct ArchiveEntries: Codable, Sendable {
+        public var entries: [ArchiveEntry]
+        public init(entries: [ArchiveEntry]) { self.entries = entries }
+    }
+
+    /// Which archive, and where the extracted file should land.
+    public struct Extract: Codable, Sendable {
+        public var archive: String
+        public var entry: String
+        public var destination: String
+
+        public init(archive: String, entry: String, destination: String) {
+            self.archive = archive
+            self.entry = entry
+            self.destination = destination
+        }
+    }
+
+    /// Files to add, with the names they take inside the archive.
+    public struct Pack: Codable, Sendable {
+        public struct Input: Codable, Sendable {
+            public var source: String
+            public var pathInArchive: String
+            public init(source: String, pathInArchive: String) {
+                self.source = source
+                self.pathInArchive = pathInArchive
+            }
+        }
+
+        public var archive: String
+        public var files: [Input]
+        public var savePaths: Bool
+        public var compressionLevel: Int?
+
+        public init(
+            archive: String, files: [Input], savePaths: Bool = true,
+            compressionLevel: Int? = nil
+        ) {
+            self.archive = archive
+            self.files = files
+            self.savePaths = savePaths
+            self.compressionLevel = compressionLevel
         }
     }
 
